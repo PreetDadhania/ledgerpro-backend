@@ -1,54 +1,38 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+const bcrypt   = require('bcryptjs');
 
 const userSchema = new mongoose.Schema(
   {
     name: {
-      type: String,
-      required: [true, 'Name is required'],
-      trim: true,
-      minlength: [2, 'Name must be at least 2 characters'],
-      maxlength: [50, 'Name cannot exceed 50 characters'],
+      type: String, required: [true, 'Name is required'],
+      trim: true, minlength: [2, 'Min 2 chars'], maxlength: [50, 'Max 50 chars'],
     },
     email: {
-      type: String,
-      required: [true, 'Email is required'],
-      unique: true,
-      lowercase: true,
-      trim: true,
-      match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email'],
+      type: String, required: [true, 'Email is required'],
+      unique: true, lowercase: true, trim: true,
+      match: [/^\S+@\S+\.\S+$/, 'Invalid email'],
     },
     password: {
-      type: String,
-      required: [true, 'Password is required'],
-      minlength: [6, 'Password must be at least 6 characters'],
-      select: false,
+      type: String, required: [true, 'Password is required'],
+      minlength: [6, 'Min 6 chars'], select: false,
     },
-    isVerified: {
-      type: Boolean,
-      default: false,
-    },
-    verifyToken: String,
+    isVerified:   { type: Boolean, default: true }, // always true — no email verification
+    businessName: { type: String, trim: true, default: '' },
+    // keep these fields so old users with tokens still work
+    verifyToken:       String,
     verifyTokenExpiry: Date,
-    resetToken: String,
-    resetTokenExpiry: Date,
-    businessName: {
-      type: String,
-      trim: true,
-      default: '',
-    },
+    resetToken:        String,
+    resetTokenExpiry:  Date,
   },
   { timestamps: true }
 );
 
-// Hash password before save
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
   this.password = await bcrypt.hash(this.password, 12);
   next();
 });
 
-// Compare passwords
 userSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
