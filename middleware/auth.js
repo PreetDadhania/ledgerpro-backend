@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken');
+const jwt  = require('jsonwebtoken');
 const User = require('../models/User');
 
 module.exports = async function authMiddleware(req, res, next) {
@@ -8,16 +8,16 @@ module.exports = async function authMiddleware(req, res, next) {
       return res.status(401).json({ message: 'No token provided. Please log in.' });
     }
 
-    const token = header.split(' ')[1];
+    const token   = header.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     const user = await User.findById(decoded.id).select('-password');
     if (!user) {
       return res.status(401).json({ message: 'User not found. Please log in again.' });
     }
-    if (!user.isVerified) {
-      return res.status(403).json({ message: 'Please verify your email before accessing this resource.' });
-    }
+
+    // ── NO email verification check — removed completely ──
+    // All registered users can access the app directly.
 
     req.user = user;
     next();
